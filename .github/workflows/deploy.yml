@@ -23,18 +23,20 @@ jobs:
         run: |
           ACTOR="${{ github.actor }}"
 
-          # Lấy dòng có @username trong CODEOWNERS
-          LINE=$(grep "@$ACTOR" .github/CODEOWNERS || true)
+          # Chỉ tìm dòng trong /sites/.../ có chứa actor
+          LINE=$(grep "^/sites/.*/ *@$ACTOR" .github/CODEOWNERS || true)
 
           if [ -z "$LINE" ]; then
-            echo "❌ Không tìm thấy folder cho actor: $ACTOR trong CODEOWNERS"
+            echo "❌ Không tìm thấy thư mục của học sinh $ACTOR trong CODEOWNERS"
             exit 1
           fi
 
-          # Lấy cột thư mục (cột 1)
-          FOLDER=$(echo "$LINE" | awk '{print $1}' | sed 's|/sites/||; s|/||')
+          # Lấy đúng phần /sites/<folder>/
+          RAW=$(echo "$LINE" | awk '{print $1}')
 
-          echo "Tìm thấy folder: $FOLDER"
+          # Loại bỏ prefix và suffix
+          FOLDER=$(echo "$RAW" | sed -E 's|^/sites/||; s|/$||')
+
           echo "folder=$FOLDER" >> "$GITHUB_OUTPUT"
 
       # -----------------------------------------

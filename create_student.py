@@ -1,80 +1,140 @@
 import os
-import argparse
+import sys
 
-BASE = "sites"
-
-def create_student_folder(name: str):
-    # Chuẩn hoá tên thư mục
-    folder_name = name.strip().replace(" ", "_").lower()
-    path = os.path.join(BASE, folder_name)
-
-    os.makedirs(path, exist_ok=True)
-
-    index_path = os.path.join(path, "index.html")
-
-    if not os.path.exists(index_path):
-        with open(index_path, "w", encoding="utf-8") as f:
-            f.write(f"""<!DOCTYPE html>
+TEMPLATE_HTML = """<!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xin chào {name}!</title>
-
-    <!-- TailwindCSS v4 (jsDelivr CDN) -->
+    <meta charset="UTF-8">
+    <title>Trang của {name}</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-
-<body class="min-h-screen bg-gradient-to-br from-sky-100 via-white to-indigo-100 flex items-center justify-center p-4">
-    <div class="max-w-lg w-full">
-        <div class="bg-white/80 backdrop-blur shadow-xl rounded-2xl border border-slate-200 p-8 text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-                Xin chào, <span class="text-indigo-600">{name}</span>! 👋
-            </h1>
-
-            <p class="text-slate-600 mb-6">
-                Đây là trang web mẫu của bạn, được tạo tự động bằng TailwindCSS v4.
-            </p>
-
-            <p class="text-slate-700 mb-6 leading-relaxed">
-                Hãy chỉnh sửa file 
-                <code class="px-2 py-1 bg-slate-100 rounded text-sm">sites/{folder_name}/index.html</code>
-                để bắt đầu thực hành HTML/CSS/JS nhé! 🚀
-            </p>
-
-            <div class="flex flex-col items-center gap-1 text-sm text-slate-500">
-                <span>Được tạo tự động bởi hệ thống lớp học 😊</span>
-                <span class="text-xs">Bạn có thể thêm CSS hoặc JS của riêng mình.</span>
-            </div>
-        </div>
+<body class="bg-gray-100 text-gray-800">
+    <div class="max-w-3xl mx-auto mt-16 p-8 bg-white shadow-lg rounded-xl">
+        <h1 class="text-3xl font-bold mb-4">Xin chào, {name}!</h1>
+        <p class="mb-4 text-lg">Đây là trang web của bạn. Hãy chỉnh sửa file <code>index.html</code> để thay đổi nội dung.</p>
+        <p class="text-gray-600">Bạn có thể thêm file HTML, CSS, JS… vào thư mục này.</p>
+        <a href="README.md" class="text-blue-600 underline mt-6 inline-block">
+            Xem hướng dẫn sử dụng GitHub Web và GitHub.dev
+        </a>
     </div>
 </body>
 </html>
-""")
+"""
 
-    print(f"✔ Đã tạo thư mục + index.html (Tailwind v4 CDN) cho: {name}  →  {path}")
+README = """# Hướng dẫn chỉnh sửa website của bạn
 
+Thư mục này là nơi chứa toàn bộ mã nguồn website của **{name}**.
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Tạo thư mục và file index.html dùng TailwindCSS v4 (jsDelivr CDN)."
-    )
-    parser.add_argument(
-        "students",
-        nargs="+",
-        help="Danh sách tên học sinh (vd: huy tuan 'Minh Anh')"
-    )
+Bạn có thể chỉnh sửa trực tiếp trên GitHub mà **không cần cài đặt phần mềm**.
 
-    args = parser.parse_args()
+---
 
-    if not os.path.exists(BASE):
-        os.makedirs(BASE)
+## 🚀 1. Chỉnh sửa trực tiếp trên GitHub Web
 
-    for student in args.students:
-        create_student_folder(student)
+1. Vào thư mục của bạn trên GitHub
+2. Bấm vào file `index.html`
+3. Nhấn nút **Edit this file** (biểu tượng cây bút)
+4. Sửa nội dung HTML
+5. Kéo xuống cuối trang → Nhập nội dung commit  
+   Ví dụ:
+```
+Cap nhat giao dien
+```
 
-    print("\n🎉 Hoàn thành tạo các trang học sinh với TailwindCSS v4 CDN!")
+6. Nhấn **Commit changes**
 
+GitHub sẽ tự động deploy website của bạn.
+
+---
+
+## ✨ 2. Mở VS Code Web bằng GitHub.dev
+
+GitHub.dev là phiên bản VS Code chạy trên trình duyệt.
+
+Có 2 cách mở:
+
+### Cách 1 — NHẤN PHÍM `.` (dấu chấm)
+Khi đang xem repo, chỉ cần nhấn: `.`
+
+→ VS Code Web sẽ mở ngay.
+
+### Cách 2 — đổi URL từ `github.com` thành `github.dev`
+
+Ví dụ:
+
+`https://github.com/EDU-TMATH/12X_2025_2026/sites/{name}`
+
+Đổi thành:
+
+`https://github.dev/EDU-TMATH/12X_2025_2026/sites/{name}`
+
+---
+
+## 📁 3. Thêm trang HTML mới
+
+1. Chuột phải thư mục của bạn → **Add file**  
+2. Chọn *Create new file*
+3. Đặt tên file, ví dụ: `about.html`
+4. Nhập nội dung HTML
+5. Commit
+
+---
+
+## 🖼️ 4. Thêm ảnh, CSS, JS
+
+- Bấm **Add file → Upload files**
+- Kéo thả file từ máy lên
+- Commit thay đổi
+
+Ảnh có thể gọi trong HTML như:
+
+```html
+<img src="images/avatar.png">
+```
+
+⸻
+
+🌐 5. Xem website của bạn
+
+Giáo viên sẽ cung cấp đường dẫn dạng:
+
+`https://<username>.pages.dev`
+
+⸻
+
+⚠️ Lưu ý quan trọng
+- Chỉ chỉnh sửa trong thư mục của bạn
+- Không xoá hoặc đổi tên file của người khác
+- Mỗi lần sửa phải Commit để lưu
+- Deploy tự động chạy sau mỗi commit
+
+⸻
+
+Chúc bạn học tốt và xây dựng website thật đẹp!
+"""
+
+def create_student(name):
+    folder_path = f"sites/{name}"
+
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    # Tạo index.html
+    with open(os.path.join(folder_path, "index.html"), "w", encoding="utf-8") as f:
+        f.write(TEMPLATE_HTML.format(name=name))
+
+    # Tạo README.md
+    with open(os.path.join(folder_path, "README.md"), "w", encoding="utf-8") as f:
+        f.write(README.format(name=name))
+
+    print(f"Đã tạo thư mục cho học sinh: {name}")
+    print(f"- {folder_path}/index.html")
+    print(f"- {folder_path}/README.md")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Cách dùng: python create_student.py <tên_học_sinh>")
+        sys.exit(1)
+
+    student_name = sys.argv[1]
+    create_student(student_name)

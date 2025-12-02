@@ -12,20 +12,86 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - run: npm install -g wrangler@latest
+      - name: Install Wrangler
+        run: npm install -g wrangler@latest
 
-      - name: Deploy
+      # -----------------------------------------
+      # 1. Map github.actor → folder bằng CODEOWNERS
+      # -----------------------------------------
+      - name: Determine student folder from CODEOWNERS
+        id: map
+        run: |
+          ACTOR="${{ github.actor }}"
+
+          # Lấy dòng có @username trong CODEOWNERS
+          LINE=$(grep "@$ACTOR" .github/CODEOWNERS || true)
+
+          if [ -z "$LINE" ]; then
+            echo "❌ Không tìm thấy folder cho actor: $ACTOR trong CODEOWNERS"
+            exit 1
+          fi
+
+          # Lấy cột thư mục (cột 1)
+          FOLDER=$(echo "$LINE" | awk '{print $1}' | sed 's|/sites/||; s|/||')
+
+          echo "Tìm thấy folder: $FOLDER"
+          echo "folder=$FOLDER" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------
+      # 2. Kiểm tra project đã tồn tại chưa
+      # -----------------------------------------
+      - name: Check if Pages project exists
+        id: check
         env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          USER="${{ github.actor }}"
-          DIR="sites/$USER"
+          PROJECT="${{ steps.map.outputs.folder }}"
 
-          echo "Deploying site for: $USER"
-          echo "Directory: $DIR"
+          echo "Checking project: $PROJECT"
+
+          STATUS=$(curl -s -o /tmp/out.json -w "%{http_code}" \
+            -X GET "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/pages/projects/$PROJECT" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
+
+          if [ "$STATUS" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # -----------------------------------------
+      # 3. Tạo Pages Project nếu chưa có
+      # -----------------------------------------
+      - name: Create Pages project
+        if: steps.check.outputs.exists == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          PROJECT="${{ steps.map.outputs.folder }}"
+
+          echo "Creating project: $PROJECT"
+
+          curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/pages/projects" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "{\"name\":\"$PROJECT\",\"production_branch\":\"main\"}"
+
+      # -----------------------------------------
+      # 4. Deploy vào đúng project
+      # -----------------------------------------
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          FOLDER="${{ steps.map.outputs.folder }}"
+          DIR="sites/$FOLDER"
+
+          echo "Deploying folder: $DIR → Project: $FOLDER"
 
           npx wrangler pages publish "$DIR" \
-            --project-name="$USER" \
-            --branch=main \
-            --compatibility-flags=pages_project_mode
+            --project-name="$FOLDER" \
+            --branch=main

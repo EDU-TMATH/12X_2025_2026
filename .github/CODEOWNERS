@@ -1,1 +1,11 @@
-/sites/patpro28/ @patpro28
+# Các file hệ thống — chỉ giáo viên (bạn) được sửa
+/README.md       @patpro28
+/.github/        @patpro28
+/CODEOWNERS      @patpro28
+
+# Học sinh — chỉ sửa đúng thư mục của mình
+/sites/patpro28/     @patpro28
+/sites/nvhq/         @HQNoPro
+
+# Mặc định toàn repo — chỉ giáo viên được sửa
+*                    @patpro28

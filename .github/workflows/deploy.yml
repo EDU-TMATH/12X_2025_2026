@@ -1,4 +1,4 @@
-name: Deploy Student Sites
+name: Deploy Student Site
 
 on:
   push:
@@ -10,26 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install Wrangler
-        run: npm install -g wrangler@latest
+      - run: npm install -g wrangler@latest
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          # Lấy thư mục thay đổi
-          CHANGED=$(git diff --name-only HEAD~1 HEAD | cut -d/ -f1-2 | uniq)
+          USER="${{ github.actor }}"
+          DIR="sites/$USER"
 
-          for dir in $CHANGED; do
-            # dir dạng: sites/huy → lấy tên huy
-            USER=$(echo "$dir" | cut -d/ -f2)
+          echo "Deploying site for: $USER"
+          echo "Directory: $DIR"
 
-            echo "🚀 Deploying project for: $USER"
-            npx wrangler pages publish "sites/$USER" \
-              --project-name="$USER" \
-              --branch=main
-          done
+          npx wrangler pages publish "$DIR" \
+            --project-name="$USER" \
+            --branch=main \
+            --compatibility-flags=pages_project_mode
